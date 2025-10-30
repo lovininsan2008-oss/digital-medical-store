@@ -1,0 +1,161 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+<title>Digital Medical Store</title>
+<style>
+  :root{--primary:#0b64c7;--bg:#f7fbff;--card:#ffffff;--muted:#666;}
+  body{margin:0;font-family:Inter,system-ui,Arial;background:var(--bg);-webkit-font-smoothing:antialiased}
+  header{background:var(--primary);color:#fff;padding:14px 12px;text-align:center;font-weight:700;font-size:18px}
+  .wrap{padding:12px;max-width:520px;margin:0 auto}
+  .language{display:flex;justify-content:flex-end;margin:10px 0}
+  select{padding:8px;border-radius:8px;border:1px solid rgba(0,0,0,0.08)}
+  .chat{display:flex;flex-direction:column;gap:10px;margin-top:8px}
+  .card{background:var(--card);padding:12px;border-radius:12px;box-shadow:0 1px 6px rgba(12,24,40,0.06);border:1px solid rgba(0,0,0,0.03)}
+  .botsay{display:flex;gap:10px;align-items:flex-start}
+  .botavatar{width:36px;height:36px;border-radius:10px;background:#e8f0ff;color:var(--primary);display:grid;place-items:center;font-weight:700}
+  .options{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-top:8px}
+  .optbtn{background:#f2f6ff;border:1px solid rgba(11,100,199,0.08);padding:12px;border-radius:10px;text-align:center;font-weight:600;cursor:pointer}
+  .answer{margin-top:10px;padding:10px;border-radius:8px;background:#fff;border-left:4px solid var(--primary)}
+  .note{margin-top:12px;text-align:center;color:var(--muted);font-size:14px}
+  footer{position:fixed;left:0;right:0;bottom:0;background:#fff;padding:10px 12px;border-top:1px solid rgba(0,0,0,0.06)}
+  .otherbtn{display:block;width:100%;padding:12px;background:var(--primary);color:#fff;border-radius:10px;border:none;font-weight:700}
+  @media (min-width:600px){body{background:linear-gradient(180deg,#f7fbff,#f2f7ff)} .wrap{margin-top:20px}}
+</style>
+</head>
+<body>
+<header>Digital Medical Store</header>
+<div class="wrap">
+  <div class="language">
+    <label for="lang" style="margin-right:8px;font-size:14px;color:var(--muted)">Language</label>
+    <select id="lang">
+      <option value="en">English</option>
+      <option value="hi">Hindi</option>
+      <option value="hn">Hinglish</option>
+    </select>
+  </div>
+
+  <div class="chat">
+    <div class="card botsay" id="welcomeCard">
+      <div class="botavatar">MD</div>
+      <div>
+        <div id="welcomeText"><strong>Hi! Welcome to Digital Medical Store.</strong><div style="font-size:13px;color:var(--muted);margin-top:6px">Choose a symptom and we'll suggest common medicines.</div></div>
+      </div>
+    </div>
+
+    <div class="card" id="optionsCard">
+      <div id="promptText" style="font-weight:700">Please select your problem:</div>
+      <div class="options" id="optionsArea">
+        <!-- buttons inserted by JS -->
+      </div>
+    </div>
+
+    <div class="card" id="resultCard" style="display:none">
+      <div id="resultTitle" style="font-weight:800;margin-bottom:6px">Suggested Medicine</div>
+      <div id="resultBody" class="answer"></div>
+    </div>
+
+    <div class="note" id="otherNote">
+      For any other query — click the nearby button below.
+    </div>
+  </div>
+</div>
+
+<footer>
+  <button class="otherbtn" onclick="otherQuery()">For other queries - Click here</button>
+</footer>
+
+<script>
+const texts = {
+  en:{
+    welcome: "Hi! Welcome to Digital Medical Store.",
+    sub: "Choose a symptom and we'll suggest common medicines.",
+    prompt: "Please select your problem:",
+    problems: ["Headache","Fever","Cold & Cough","Stomach Pain","Vomiting","Minor Injury"],
+    results:[
+      "<strong>Paracetamol 650mg (Dolo)</strong><br>Take one tablet every 6-8 hours if needed. Do not exceed 4 tablets in 24 hours.",
+      "<strong>Paracetamol 650mg</strong><br>Rest and drink plenty of fluids. Seek doctor if fever > 48 hours.",
+      "<strong>Cough syrup (as per age)</strong><br>Take as directed. Steam inhalation may help.",
+      "<strong>Antacid (Ranitidine/Antacid)</strong><br>Drink ORS if dehydration suspected.",
+      "<strong>ORS solution</strong><br>Take small sips. If severe vomiting, consult a doctor.",
+      "<strong>Clean wound, apply antiseptic & bandage</strong><br>Take tetanus shot advice if deep."
+    ],
+    otherNote: "For any other query — click the nearby button below.",
+    otherBtn: "For other queries - Click here"
+  },
+  hi:{
+    welcome: "नमस्ते! Digital Medical Store में आपका स्वागत है।",
+    sub: "अपनी समस्या चुनें और हम सामान्य दवाइयाँ सुझाएँगे।",
+    prompt: "कृपया अपनी समस्या चुनें:",
+    problems: ["सिरदर्द","बुखार","जुकाम और खाँसी"," पेट दर्द","उल्टी","छोटी चोट"],
+    results:[
+      "<strong>पैरासिटामोल 650mg (Dolo)</strong><br>जरुरत पर 6-8 घंटे पर एक टैबलेट। 24 घंटे में 4 टैबलेट से अधिक न लें।",
+      "<strong>पैरासिटामोल 650mg</strong><br>आराम करें और ज्यादा पानी पिएँ। 48 घंटे से अधिक बुखार हो तो डॉक्टर से संपर्क करें।",
+      "<strong>कफ सिरप (उम्र अनुसार)</strong><br>निर्देशानुसार लें। भाप लेना मदद कर सकता है।",
+      "<strong>एंटासिड दवा</strong><br>डिहाइड्रेशन हो तो ORS लें।",
+      "<strong>ORS घोल</strong><br>छोटी मात्रा में पिएँ। अगर उल्टी तेज हो तो डॉक्टर को दिखाएँ।",
+      "<strong>घाव साफ़ करें, एंटीसेप्टिक लगाएँ और पोटली बाँधें</strong><br>गहरा हो तो टिटनेस की सलाह लें।"
+    ],
+    otherNote: "अन्य समस्या के लिए — नीचे के बटन पर क्लिक करें।",
+    otherBtn: "अन्य समस्या के लिए क्लिक करें"
+  },
+  hn:{
+    welcome: "Hi! Digital Medical Store mein aapka swagat hai.",
+    sub: "Apni problem choose karo aur hum common medicines suggest karenge.",
+    prompt: "Kripya apni problem chune:",
+    problems: ["Headache","Fever","Cold & Cough","Stomach Pain","Vomiting","Minor Injury"],
+    results:[
+      "<strong>Dolo 650</strong><br>6-8 ghante mein ek tablet zarurat par. 24 ghante mein 4 se zyada na lein.",
+      "<strong>Dolo 650</strong><br>Rest karo aur paani piyen. 48 ghante se zyada fever ho to doctor se milen.",
+      "<strong>Cough syrup</strong><br>Age ke hisab se lo. Steam bhi help karega.",
+      "<strong>Antacid</strong><br>ORS lo agar dehydration ho.",
+      "<strong>ORS</strong><br>Choti choti sips lo. Severe ho to doctor dikhao.",
+      "<strong>Wound clean karke antiseptic lagao & bandage</strong><br>Deep ho to tetanus ka dhyan rakho."
+    ],
+    otherNote: "Kisi aur query ke liye — neeche wale button par click karein.",
+    otherBtn: "Kisi aur query ke liye click karein"
+  }
+};
+
+let currentLang = 'en';
+
+function buildOptions(){
+  const area = document.getElementById('optionsArea');
+  area.innerHTML = '';
+  texts[currentLang].problems.forEach((p,idx)=>{
+    const btn = document.createElement('div');
+    btn.className='optbtn';
+    btn.innerText = p;
+    btn.onclick = ()=> showResult(idx);
+    area.appendChild(btn);
+  });
+  document.getElementById('promptText').innerText = texts[currentLang].prompt;
+  document.getElementById('welcomeText').innerHTML = '<strong>' + texts[currentLang].welcome + '</strong><div style="font-size:13px;color:var(--muted);margin-top:6px">' + texts[currentLang].sub + '</div>';
+  document.getElementById('otherNote').innerText = texts[currentLang].otherNote;
+  document.querySelector('.otherbtn')?.setAttribute('aria-label', texts[currentLang].otherBtn);
+}
+
+function showResult(i){
+  const rc = document.getElementById('resultCard');
+  rc.style.display='block';
+  document.getElementById('resultBody').innerHTML = texts[currentLang].results[i];
+  // scroll to result for small screens
+  setTimeout(()=> rc.scrollIntoView({behavior:'smooth',block:'center'}),150);
+}
+
+document.getElementById('lang').addEventListener('change', (e)=>{
+  currentLang = e.target.value;
+  buildOptions();
+});
+
+// other queries button action
+function otherQuery(){
+  alert(texts[currentLang].otherBtn + "\nPlease contact the model operator for more help.");
+}
+
+buildOptions();
+</script>
+</body>
+</html>
